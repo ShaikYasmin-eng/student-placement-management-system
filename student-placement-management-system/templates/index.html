@@ -1,0 +1,285 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Placement Management</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f1f5f9;
+            margin: 0;
+            color: #1e293b;
+        }
+
+        header {
+            background: #173b67;
+            color: white;
+            padding: 25px;
+            text-align: center;
+        }
+
+        main {
+            max-width: 1100px;
+            margin: 25px auto;
+            padding: 15px;
+        }
+
+        .card {
+            background: white;
+            padding: 20px;
+            margin-bottom: 25px;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px #00000012;
+        }
+
+        input, select, button {
+            padding: 10px;
+            margin: 5px 0;
+            box-sizing: border-box;
+        }
+
+        input, select {
+            border: 1px solid #cbd5e1;
+            border-radius: 5px;
+            max-width: 100%;
+        }
+
+        form.add-form {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 8px;
+        }
+
+        button {
+            background: #2563eb;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #1d4ed8;
+        }
+
+        .table-wrap {
+            overflow-x: auto;
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin-top: 12px;
+        }
+
+        th, td {
+            padding: 12px;
+            border-bottom: 1px solid #e2e8f0;
+            text-align: left;
+        }
+
+        th {
+            background: #eaf1fb;
+        }
+
+        .success {
+            color: #166534;
+            background: #dcfce7;
+            padding: 10px;
+        }
+
+        .error {
+            color: #991b1b;
+            background: #fee2e2;
+            padding: 10px;
+        }
+
+        .apply-form {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        footer {
+            text-align: center;
+            padding: 20px;
+            color: #64748b;
+        }
+    </style>
+</head>
+
+<body>
+<header>
+    <h1>Student Placement Management System</h1>
+    <p>Manage students, companies and placement applications</p>
+</header>
+
+<main>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% for category, message in messages %}
+            <p class="{{ category }}">{{ message }}</p>
+        {% endfor %}
+    {% endwith %}
+
+    <section class="card">
+        <h2>Add Student</h2>
+
+        <form class="add-form" action="/add_student" method="POST">
+            <input name="roll" placeholder="Roll Number" required>
+            <input name="name" placeholder="Student Name" required>
+            <input name="branch" placeholder="Branch" required>
+            <input name="email" type="email" placeholder="Email" required>
+            <input name="cgpa" type="number" step="0.01"
+                   min="0" max="10" placeholder="CGPA" required>
+            <button type="submit">Add Student</button>
+        </form>
+    </section>
+
+    <section class="card">
+        <h2>Student List</h2>
+
+        <div class="table-wrap">
+        <table>
+            <tr>
+                <th>Roll Number</th>
+                <th>Name</th>
+                <th>Branch</th>
+                <th>Email</th>
+                <th>CGPA</th>
+            </tr>
+
+            {% for s in students %}
+            <tr>
+                <td>{{ s.roll }}</td>
+                <td>{{ s.name }}</td>
+                <td>{{ s.branch }}</td>
+                <td>{{ s.email }}</td>
+                <td>{{ "%.2f"|format(s.cgpa) }}</td>
+            </tr>
+            {% else %}
+            <tr><td colspan="5">No students added yet.</td></tr>
+            {% endfor %}
+        </table>
+        </div>
+    </section>
+
+    <section class="card">
+        <h2>Add Company</h2>
+
+        <form class="add-form" action="/add_company" method="POST">
+            <input name="name" placeholder="Company Name" required>
+            <input name="role" placeholder="Job Role" required>
+            <input name="min_cgpa" type="number" step="0.01"
+                   min="0" max="10" placeholder="Minimum CGPA" required>
+            <input name="package" type="number" step="0.01"
+                   min="0" placeholder="Package (LPA)" required>
+            <button type="submit">Add Company</button>
+        </form>
+    </section>
+
+    <section class="card">
+        <h2>Available Companies</h2>
+
+        <div class="table-wrap">
+        <table>
+            <tr>
+                <th>Company</th>
+                <th>Job Role</th>
+                <th>Minimum CGPA</th>
+                <th>Package (LPA)</th>
+            </tr>
+
+            {% for c in companies %}
+            <tr>
+                <td>{{ c.name }}</td>
+                <td>{{ c.role }}</td>
+                <td>{{ "%.2f"|format(c.min_cgpa) }}</td>
+                <td>{{ "%.2f"|format(c.package) }}</td>
+            </tr>
+            {% else %}
+            <tr><td colspan="4">No companies added yet.</td></tr>
+            {% endfor %}
+        </table>
+        </div>
+    </section>
+
+    <section class="card">
+        <h2>Apply for a Placement</h2>
+
+        <form class="apply-form" action="/apply" method="POST">
+            <select name="roll" required>
+                <option value="">Select Student</option>
+                {% for s in students %}
+                <option value="{{ s.roll }}">
+                    {{ s.name }} ({{ s.roll }})
+                </option>
+                {% endfor %}
+            </select>
+
+            <select name="company_id" required>
+                <option value="">Select Company</option>
+                {% for c in companies %}
+                <option value="{{ c.id }}">
+                    {{ c.name }} - {{ c.role }}
+                </option>
+                {% endfor %}
+            </select>
+
+            <button type="submit">Apply</button>
+        </form>
+    </section>
+
+    <section class="card">
+        <h2>Placement Applications</h2>
+
+        <div class="table-wrap">
+        <table>
+            <tr>
+                <th>Student</th>
+                <th>Roll Number</th>
+                <th>Company</th>
+                <th>Role</th>
+                <th>Status</th>
+                <th>Update Status</th>
+            </tr>
+
+            {% for a in applications %}
+            <tr>
+                <td>{{ a.student_name }}</td>
+                <td>{{ a.roll }}</td>
+                <td>{{ a.company_name }}</td>
+                <td>{{ a.role }}</td>
+                <td>{{ a.status }}</td>
+                <td>
+                    <form action="/update_status/{{ a.id }}" method="POST">
+                        <select name="status">
+                            {% for status in
+                               ['Applied', 'Shortlisted', 'Selected', 'Rejected'] %}
+                            <option value="{{ status }}"
+                                {% if a.status == status %}selected{% endif %}>
+                                {{ status }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                        <button type="submit">Update</button>
+                    </form>
+                </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="6">No applications submitted yet.</td></tr>
+            {% endfor %}
+        </table>
+        </div>
+    </section>
+
+</main>
+
+<footer>
+    <p>Student Placement Management System | Python + Flask + SQLite</p>
+</footer>
+</body>
+</html>
